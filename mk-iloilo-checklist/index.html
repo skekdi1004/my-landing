@@ -161,8 +161,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <button type="button" class="btn danger" id="reset">↺ 초기화</button>
   <input class="hidden-input" type="file" id="restore-file" accept=".json,application/json" />
  </div></section>
- <div class="small-note"><div class="notice"><strong>📌 개인연수 / 가족연수</strong><p>개인연수에서는 ‘가족연수 전용’ 영문 주민등록등본을 체크 대상에서 제외해요. 가족연수로 바꾸면 다시 보여요. 렌즈·수영복 등 개인에게 필요 없는 물품은 ‘해당 없음’을 눌러 주세요.</p></div><div class="notice warm"><strong>💳 납부 항목과 물품은 달라요</strong><p>현지 납부비용, 수하물 규정, 여권 유효기간 등은 첨부된 OT PDF에 나온 안내예요. 이번 단체는 현지비용을 출국 전 완납한다는 공지가 있었으니 실제 준비할 현금·납부 내역은 담당자에게 확인해 주세요.</p></div></div>
- <footer class="footer">자료 기준: MK어학원 오리엔테이션 PDF (준비물 p.3·6·7, 출입국 p.8·9, 건강관리 p.19).<br/>이 페이지는 각 이용자의 브라우저에만 체크 상태를 저장하며, 서버에 전송하지 않습니다. 브라우저 또는 기기를 바꾸면 백업 파일로 복원해 주세요.</footer>
+ <div class="small-note"><div class="notice"><strong>📌 개인연수 / 가족연수</strong><p>개인연수에서는 ‘가족연수 전용’ 영문 주민등록등본을 체크 대상에서 제외해요. 가족연수로 바꾸면 다시 보여요. 렌즈·수영복 등 개인에게 필요 없는 물품은 ‘해당 없음’을 눌러 주세요.</p></div></div>
+ <footer class="footer">자료 기준: MK어학원 오리엔테이션 PDF (준비물 p.3·7, 출입국 p.8·9, 건강관리 p.19).<br/>이 페이지는 각 이용자의 브라우저에만 체크 상태를 저장하며, 서버에 전송하지 않습니다. 브라우저 또는 기기를 바꾸면 백업 파일로 복원해 주세요.</footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <script>
@@ -179,19 +179,6 @@ const groups=[
   ['family-doc','영문 주민등록등본','가족연수 전용. 영문 이름과 가족 구성 확인, 발급 시점 확인','family',true],
   ['baggage-rules','항공사 수하물 규정 확인','위탁·기내 수하물 무게, 크기, 반입제한 확인','req'],
   ['baggage-tag','수하물표 잘 보관하기','체크인 때 받은 짐표를 잃어버리지 않기','req']
- ]},
- {id:'money',name:'현금 · 납부 비용',icon:'💳',page:'PDF 3, 6페이지',items:[
-  ['usd','미국 달러(USD) 환전','PDF에서는 100달러권 환전을 권장','req'],
-  ['peso','필리핀 페소(PHP)','현지 개인 결제와 잔돈용','rec'],
-  ['deposit','기숙사 보증금','PDF상 US$100. 이번 단체의 선납 여부 확인','pay'],
-  ['keydeposit','기숙사 열쇠 보증금','PDF상 150페소, 환급 조건 확인','pay'],
-  ['ssp','SSP 발급비','PDF상 7,500페소, 납부 확인','pay'],
-  ['ssp-card','SSP I-CARD 발급비','PDF상 4,500페소, 납부 확인','pay'],
-  ['id-fee','학생증 발급비','PDF상 300페소, 납부 확인','pay'],
-  ['utility','시설관리비 · 전기세 · 수도세','선납 또는 현지 정산 여부 확인','pay'],
-  ['books-fee','교재비 · 세탁비','개인별 실제 이용 시 지불 여부 확인','pay'],
-  ['spending','개인 생활비','자료상 월 20만~30만 원 예시','rec'],
-  ['activity','주말 활동비','여행·봉사활동·액티비티 참여 시','opt']
  ]},
  {id:'study',name:'영어 공부 · 전자기기',icon:'📚',page:'PDF 3페이지',items:[
   ['dict','오프라인 영어사전 / 사전 앱','인터넷 없이 사용할 수 있는 사전','req'],
@@ -245,10 +232,10 @@ const LSKEY='mk-iloilo-checklist-v2';
 const UIKEY='mk-iloilo-checklist-prefs-v2';
 const all=groups.flatMap(g=>g.items.map(i=>({id:i[0],title:i[1],desc:i[2],level:i[3],familyOnly:!!i[4],group:g.id})));
 const VALID = new Set(all.map(i=>i.id));
-const labels={req:'필수',rec:'권장',opt:'선택',pay:'비용',family:'가족연수'};
+const labels={req:'필수',rec:'권장',opt:'선택',family:'가족연수'};
 const $=sel=>document.querySelector(sel);
 let states={};let prefs={trip:'solo'};let chosenGroup='all',statusFilter='all',search='';
-try{const s=JSON.parse(localStorage.getItem(LSKEY)||'{}');if(s&&typeof s==='object')states=s;}catch(e){}
+try{const saved=JSON.parse(localStorage.getItem(LSKEY)||'{}');if(saved&&typeof saved==='object'){for(const [id,v] of Object.entries(saved))if(VALID.has(id)&&['done','na'].includes(v))states[id]=v;}}catch(e){}
 try{const p=JSON.parse(localStorage.getItem(UIKEY)||'{}');if(p?.trip==='family'||p?.trip==='solo')prefs.trip=p.trip;}catch(e){}
 $('#trip-type').value=prefs.trip;
 const el=id=>document.getElementById(id);
@@ -274,7 +261,7 @@ el('filters').addEventListener('click',e=>{const b=e.target.closest('[data-group
 document.querySelectorAll('[data-status]').forEach(b=>b.addEventListener('click',()=>{statusFilter=b.dataset.status;document.querySelectorAll('[data-status]').forEach(x=>x.classList.toggle('active',x===b));render()}));
 el('search').addEventListener('input',e=>{search=e.target.value;render()});
 el('trip-type').addEventListener('change',e=>{prefs.trip=e.target.value;save();if(chosenGroup==='travel'||chosenGroup==='all'){}render();toast(prefs.trip==='family'?'가족연수 항목을 포함했어요':'개인연수 항목으로 바꿨어요')});
-function pendingText(){const lines=['필리핀 MK 3주 어학연수 · 미완료 준비물','출국: 2027.01.30 / 한국 도착: 2027.02.21','연수형태: '+(prefs.trip==='family'?'가족연수':'개인연수'),''];for(const g of groups){const items=relevant().filter(i=>i.group===g.id&&state(i)==='pending');if(!items.length)continue;lines.push('['+g.name+']');items.forEach(i=>lines.push('☐ '+i.title+' — '+i.desc));lines.push('')}lines.push('※ OT 자료 기준이며, 이번 단체의 선납 안내 및 항공사 규정은 별도 확인.');return lines.join('\n')}
+function pendingText(){const lines=['필리핀 MK 3주 어학연수 · 미완료 준비물','출국: 2027.01.30 / 한국 도착: 2027.02.21','연수형태: '+(prefs.trip==='family'?'가족연수':'개인연수'),''];for(const g of groups){const items=relevant().filter(i=>i.group===g.id&&state(i)==='pending');if(!items.length)continue;lines.push('['+g.name+']');items.forEach(i=>lines.push('☐ '+i.title+' — '+i.desc));lines.push('')}lines.push('※ OT 자료 기준이며, 실제 입국 요건과 항공사 수하물 규정은 출국 전에 확인.');return lines.join('\n')}
 async function copyText(text){if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true}catch(e){}}let ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok}
 el('copy-pending').addEventListener('click',async()=>{const t=pendingText();if(await copyText(t))toast('미완료 목록을 복사했어요');else{download('MK_미완료_준비물.txt',t,'text/plain;charset=utf-8');toast('클립보드 대신 TXT 파일을 저장했어요')}});
 function download(name,body,type){const blob=new Blob([body],{type});const a=document.createElement('a');const u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
